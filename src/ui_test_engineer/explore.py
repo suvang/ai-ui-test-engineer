@@ -4,6 +4,7 @@ from urllib.parse import urljoin, urlparse
 
 from playwright.sync_api import Locator, Page, sync_playwright
 
+from ui_test_engineer.script import _url_glob
 from ui_test_engineer.types import Control
 
 MAX_CONTROLS = 8
@@ -64,20 +65,28 @@ def _read(page: Page, url: str) -> Observation:
     return Observation(url, heading, snapshot, screenshot, tuple(kept))
 
 
-def _heading(page: Page) -> str:
+def _clean(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _heading_text(page: Page) -> str:
     headings = page.get_by_role("heading")
     if headings.count() == 0:
-        return page.title().strip()
-    return headings.first.inner_text().strip()
+        return ""
+    return _clean(headings.first.inner_text())
+
+
+def _heading(page: Page) -> str:
+    return _heading_text(page) or _clean(page.title())
 
 
 def _names(locator: Locator) -> list[str]:
     found: list[str] = []
     for index in range(locator.count()):
         item = locator.nth(index)
-        text = item.inner_text().strip().split("\n")[0].strip()
+        text = _clean(item.inner_text().split("\n")[0])
         if not text:
-            text = (item.get_attribute("aria-label") or "").strip()
+            text = _clean(item.get_attribute("aria-label") or "")
         if text:
             found.append(text)
     return found
@@ -94,7 +103,7 @@ def _field_names(page: Page) -> list[str]:
             }"""
         )
         if isinstance(name, str) and name:
-            found.append(name.split("\n")[0].strip())
+            found.append(_clean(name.split("\n")[0]))
     return found
 
 
@@ -102,16 +111,30 @@ def _first_flow(page: Page, url: str) -> Control | None:
     links = page.get_by_role("link")
     for index in range(links.count()):
         link = links.nth(index)
-        name = link.inner_text().strip().split("\n")[0].strip()
+        name = _clean(link.inner_text().split("\n")[0])
         href = link.get_attribute("href") or ""
         if not name or not _is_flow_href(url, href):
             continue
-        link.click()
-        page.wait_for_load_state("domcontentloaded")
-        destination = _heading(page)
-        page.go_back(wait_until="domcontentloaded")
-        return Control("navigation_link", name, destination)
+        target = urljoin(page.url, href)
+        try:
+            link.click()
+            page.wait_for_url(_url_glob(target), timeout=8000)
+        except Exception:
+            if _page_key(page.url) == _page_key(url):
+                continue
+        destination = _heading_text(page)
+        landed = page.url
+        try:
+            page.go_back(wait_until="domcontentloaded")
+        except Exception:
+            pass
+        return Control("navigation_link", name, destination, landed)
     return None
+
+
+def _page_key(url: str) -> str:
+    parsed = urlparse(url)
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path.rstrip('/')}"
 
 
 def _is_flow_href(page_url: str, href: str) -> bool:

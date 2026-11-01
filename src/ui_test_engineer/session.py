@@ -98,7 +98,7 @@ class LocalSession(ToolSession):
                 if isinstance(item, dict) and isinstance(item.get("name"), str):
                     names.append(item["name"])
         for name in names:
-            if name in failure and name not in self._dropped:
+            if f"name={json.dumps(name)}" in failure and name not in self._dropped:
                 self._dropped.add(name)
                 return
 

@@ -7,11 +7,21 @@
 <body>
   <h1>Studio desk</h1>
   <button type="button">Add to bag</button>
+  <button type="button" id="catalog">Load catalog</button>
+  <button type="button" id="missing">Load missing</button>
   <form action="/nowhere" method="post">
     <label for="quantity">Quantity</label>
     <input id="quantity" name="quantity" />
   </form>
   <a href="shipping.html">Shipping</a>
-  <a href="https://example.com/elsewhere">Elsewhere</a>
+  <script>
+    fetch("/sample/session.json");
+    document.getElementById("catalog").addEventListener("click", () => {
+      fetch("/sample/catalog.json");
+    });
+    document.getElementById("missing").addEventListener("click", () => {
+      fetch("/sample/missing.json");
+    });
+  </script>
 </body>
 </html>

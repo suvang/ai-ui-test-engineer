@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -26,6 +26,14 @@ def create_app(engineer: TestEngineer | None = None) -> FastAPI:
     def home() -> FileResponse:
         return FileResponse(PAGE)
 
+    @app.get("/demo/rendered-500")
+    def rendered_500() -> HTMLResponse:
+        html = (
+            "<h1>Explore</h1><p>The explore page rendered with its articles "
+            "and categories still visible to the reader.</p>"
+        )
+        return HTMLResponse(html, status_code=500)
+
     @app.post("/examinations")
     def examinations(body: ExamineBody) -> dict[str, object]:
         if not body.url.strip():
@@ -39,12 +47,10 @@ def _examination_json(examination: Examination) -> dict[str, object]:
     return {
         "url": examination.url,
         "passed": examination.passed,
-        "script": examination.script,
+        "detail": examination.detail,
         "snapshot": examination.snapshot,
-        "screenshot_bytes": examination.screenshot_bytes,
-        "controls": [control.as_dict() for control in examination.controls],
-        "attempts": [
-            {"passed": attempt.passed, "failure": attempt.failure, "script": attempt.script}
-            for attempt in examination.attempts
-        ],
+        "page_screenshot": examination.page_screenshot,
+        "page_network_screenshot": examination.page_network_screenshot,
+        "page_calls": [call.as_dict() for call in examination.page_calls],
+        "findings": [finding.as_dict() for finding in examination.findings],
     }

@@ -2,7 +2,7 @@ import os
 from collections.abc import Mapping
 
 from ui_test_engineer.engineer import TestEngineer
-from ui_test_engineer.session import LocalSession, OpenAIToolSession
+from ui_test_engineer.narrator import phrase_findings
 
 
 def build_engineer(env: Mapping[str, str] | None = None) -> TestEngineer:
@@ -15,5 +15,5 @@ def build_engineer(env: Mapping[str, str] | None = None) -> TestEngineer:
         settings = env
     api_key = settings.get("OPENAI_API_KEY") or ""
     if api_key:
-        return TestEngineer(lambda: OpenAIToolSession(api_key))
-    return TestEngineer(lambda: LocalSession())
+        return TestEngineer(narrator=lambda findings: phrase_findings(api_key, findings))
+    return TestEngineer()

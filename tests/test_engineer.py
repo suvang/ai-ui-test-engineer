@@ -1,194 +1,173 @@
-"""An Examination proves a Target page with a Test script."""
+"""An Examination clicks every call to action and reports what each one did."""
 
-import json
-import socket
+import base64
 import threading
-import time
 from collections.abc import Iterator
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import urlparse
 
-import httpx
 import pytest
-import uvicorn
 from fastapi.testclient import TestClient
 
 from ui_test_engineer.api import create_app
 from ui_test_engineer.engineer import TestEngineer
-from ui_test_engineer.session import ModelTurn, ToolCall, ToolSession, tool_followups
 
-SAMPLE = Path(__file__).parents[1] / "src" / "ui_test_engineer" / "static" / "sample"
+PAGE = """<!DOCTYPE html>
+<html>
+<body>
+  <h1>Shop</h1>
+  <a href="/next">Shipping</a>
+  <a href="/missing">Broken link</a>
+  <a href="/crew">Join<br>us</a>
+  <a href="/rendered">Explore Content</a>
+  <button type="button" id="ok">Load items</button>
+  <button type="button" id="bad">Load broken</button>
+  <script>
+    fetch("/api/health");
+    document.getElementById("ok").onclick = () => {
+      fetch("/api/items");
+      fetch("/api/health");
+      fetch("/next?_rsc=1");
+    };
+    document.getElementById("bad").onclick = () => fetch("/api/broken");
+  </script>
+</body>
+</html>
+"""
 
 
-class SampleHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args: object, **kwargs: object) -> None:
-        super().__init__(*args, directory=str(SAMPLE), **kwargs)  # type: ignore[arg-type]
+class ShopHandler(BaseHTTPRequestHandler):
+    def do_GET(self) -> None:
+        path = urlparse(self.path).path
+        if path == "/":
+            self._send(200, "text/html", PAGE.encode())
+        elif path == "/next":
+            self._send(200, "text/html", b"<h1>Next</h1>")
+        elif path == "/crew":
+            self._send(200, "text/html", b"<h1>Crew</h1>")
+        elif path == "/rendered":
+            page = (
+                b"<h1>Explore</h1><p>The explore page rendered with its articles "
+                b"and categories still visible to the reader.</p>"
+            )
+            self._send(500, "text/html", page)
+        elif path == "/api/items":
+            self._send(200, "application/json", b'{"ok": true}')
+        elif path == "/api/health":
+            self._send(500, "application/json", b'{"error": "down"}')
+        elif path == "/api/broken":
+            self._send(500, "application/json", b'{"error": "nope"}')
+        else:
+            self._send(404, "text/html", b"missing")
 
     def log_message(self, format: str, *args: object) -> None:
         return
 
-
-class ScriptedSession(ToolSession):
-    def __init__(self, turns: list[ModelTurn]) -> None:
-        self._turns = turns
-        self.index = 0
-        self.results: list[list[tuple[ToolCall, str]]] = []
-
-    def start(self, system: str, user: str, tools: list[dict[str, object]]) -> ModelTurn:
-        return self._next()
-
-    def resume(self, results: list[tuple[ToolCall, str]]) -> ModelTurn:
-        self.results.append(results)
-        return self._next()
-
-    def _next(self) -> ModelTurn:
-        turn = self._turns[self.index]
-        self.index += 1
-        return turn
+    def _send(self, status: int, content_type: str, body: bytes) -> None:
+        self.send_response(status)
+        self.send_header("content-type", content_type)
+        self.send_header("content-length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 @pytest.fixture(scope="module")
-def sample_url() -> Iterator[str]:
-    httpd = ThreadingHTTPServer(("127.0.0.1", 0), SampleHandler)
+def shop_url() -> Iterator[str]:
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), ShopHandler)
     thread = threading.Thread(target=httpd.serve_forever, daemon=True)
     thread.start()
     port = httpd.server_address[1]
-    yield f"http://127.0.0.1:{port}/desk.html"
+    yield f"http://127.0.0.1:{port}/"
     httpd.shutdown()
-
-
-def passing_script(url: str) -> str:
-    return (
-        "from playwright.sync_api import sync_playwright\n"
-        "def test_target_page() -> None:\n"
-        "    with sync_playwright() as playwright:\n"
-        "        browser = playwright.chromium.launch(headless=True)\n"
-        "        page = browser.new_page()\n"
-        "        page.set_default_timeout(8000)\n"
-        f"        page.goto({url!r}, wait_until='domcontentloaded')\n"
-        "        page.get_by_role('button', name='Add to bag').wait_for(state='visible')\n"
-        "        browser.close()\n"
-        "if __name__ == '__main__':\n"
-        "    test_target_page()\n"
-    )
-
-
-def test_a_target_page_that_cannot_be_opened_fails() -> None:
-    examination = TestEngineer().examine("http://127.0.0.1:1/")
-
-    assert examination.passed is False
-    assert examination.attempts[0].failure.startswith("Could not open the Target page:")
 
 
 def test_a_non_http_url_fails_without_opening_a_browser() -> None:
     examination = TestEngineer().examine("ftp://files.example/readme")
 
     assert examination.passed is False
-    assert examination.attempts[0].failure == "Enter an http(s) URL."
-    assert examination.script == ""
+    assert examination.detail == "Enter an http(s) URL."
 
 
-def test_examining_a_page_returns_a_passing_script_for_its_button_and_form_field(
-    sample_url: str,
-) -> None:
-    examination = TestEngineer().examine(sample_url)
-
-    assert examination.passed is True
-    assert examination.attempts[0].passed is True
-    assert "Add to bag" in examination.script
-    assert "Quantity" in examination.script
-    assert "field.fill('2')" in examination.script
-    assert "submit" not in examination.script
-    assert any(control.kind == "button" and control.name == "Add to bag" for control in examination.controls)
-    assert any(
-        control.kind == "form_field" and control.name == "Quantity" for control in examination.controls
-    )
-    assert "Studio desk" in examination.snapshot
-    assert examination.screenshot_bytes > 100
-
-
-def test_the_test_script_follows_one_flow_and_skips_a_cross_origin_link(sample_url: str) -> None:
-    examination = TestEngineer().examine(sample_url)
-
-    assert examination.passed is True
-    assert any(
-        control.kind == "navigation_link" and control.name == "Shipping" and control.destination == "Shipping"
-        for control in examination.controls
-    )
-    assert examination.script.count(".click()") == 1
-    assert "Shipping" in examination.script
-    assert "example.com" not in examination.script
-
-
-def test_a_failed_attempt_is_kept_and_a_later_attempt_can_pass(sample_url: str) -> None:
-    bad = "import sys\nsys.exit('Missing button')\n"
-    session = ScriptedSession(
-        [
-            ModelTurn("", (ToolCall("1", "write_test", {"source": bad}),)),
-            ModelTurn("", (ToolCall("2", "write_test", {"source": passing_script(sample_url)}),)),
-        ]
-    )
-
-    examination = TestEngineer(lambda: session).examine(sample_url)
-
-    assert examination.attempts[0].passed is False
-    assert "Missing button" in examination.attempts[0].failure
-    assert examination.attempts[1].passed is True
-    assert examination.passed is True
-    assert examination.script == passing_script(sample_url)
-
-
-def test_three_failing_attempts_stop_the_examination(sample_url: str) -> None:
-    bad = "import sys\nsys.exit('still failing')\n"
-    session = ScriptedSession(
-        [ModelTurn("", (ToolCall(str(index), "write_test", {"source": bad}),)) for index in range(1, 5)]
-    )
-
-    examination = TestEngineer(lambda: session).examine(sample_url)
+def test_a_target_page_that_cannot_be_opened_fails() -> None:
+    examination = TestEngineer().examine("http://127.0.0.1:1/")
 
     assert examination.passed is False
-    assert len(examination.attempts) == 3
-    assert all("still failing" in attempt.failure for attempt in examination.attempts)
-    assert session.index == 3
+    assert examination.detail.startswith("Could not open the Target page:")
 
 
-def test_the_model_observes_before_it_writes(sample_url: str) -> None:
-    script = passing_script(sample_url)
-    session = ScriptedSession(
-        [
-            ModelTurn("", (ToolCall("1", "observe", {}),)),
-            ModelTurn("", (ToolCall("2", "write_test", {"source": script}),)),
-        ]
-    )
+def test_each_call_to_action_is_reported(shop_url: str) -> None:
+    examination = TestEngineer().examine(shop_url)
+    by_name = {finding.name: finding for finding in examination.findings}
 
-    examination = TestEngineer(lambda: session).examine(sample_url)
+    assert set(by_name) == {
+        "Shipping",
+        "Broken link",
+        "Join us",
+        "Explore Content",
+        "Load items",
+        "Load broken",
+    }
+    assert examination.passed is False
 
-    assert examination.passed is True
-    assert examination.script == script
-    payload = json.loads(session.results[0][0][1])
-    assert payload["heading"] == "Studio desk"
-    assert "Studio desk" in payload["snapshot"]
-    assert payload["screenshot_bytes"] > 100
-    assert payload["screenshot_base64"]
+    assert base64.b64decode(examination.page_screenshot).startswith(b"\x89PNG")
+    assert base64.b64decode(examination.page_network_screenshot).startswith(b"\x89PNG")
 
+    health = next(call for call in examination.page_calls if call.name == "/api/health")
+    assert health.method == "GET"
+    assert health.status == 500
+    assert health.ok is False
+    assert all(call.name != "/api/health" for finding in examination.findings for call in finding.calls)
 
-def test_an_observation_picture_is_sent_with_the_words() -> None:
-    payload = json.dumps(
-        {
-            "heading": "Studio desk",
-            "snapshot": "Studio desk",
-            "screenshot_base64": "aaaa",
-            "screenshot_bytes": 4,
-        }
-    )
+    shipping = by_name["Shipping"]
+    assert shipping.passed is True
+    assert shipping.navigation == "passed"
+    assert shipping.kind == "link"
+    assert shipping.calls == ()
+    assert "/next" in shipping.action
+    assert shipping.network == ()
+    assert shipping.network_screenshot == ""
+    assert base64.b64decode(shipping.screenshot).startswith(b"\x89PNG")
 
-    messages = tool_followups("obs-1", payload)
+    explore = by_name["Explore Content"]
+    assert explore.passed is True
+    assert explore.navigation == "passed"
+    assert "The page rendered." in explore.action
+    assert "Navigation" not in explore.detail
+    rendered = next(call for call in explore.network if call.status == 500)
+    assert rendered.method == "GET"
+    assert rendered.url.endswith("/rendered")
+    assert base64.b64decode(explore.screenshot).startswith(b"\x89PNG")
+    assert base64.b64decode(explore.network_screenshot).startswith(b"\x89PNG")
 
-    assert "aaaa" not in str(messages[0]["content"])
-    assert "Studio desk" in str(messages[0]["content"])
-    content = messages[1]["content"]
-    assert isinstance(content, list)
-    assert content[1]["image_url"]["url"] == "data:image/png;base64,aaaa"
+    joined = by_name["Join us"]
+    assert joined.passed is True
+    assert joined.navigation == "passed"
+    assert "could not be clicked" not in joined.detail
+    assert "/crew" in joined.action
+
+    broken = by_name["Broken link"]
+    assert broken.passed is False
+    assert broken.navigation == "failed"
+    assert broken.calls == ()
+    assert "404" in broken.detail
+
+    items = by_name["Load items"]
+    assert items.passed is True
+    assert items.navigation == "stayed"
+    assert [call.name for call in items.calls] == ["/api/items"]
+    assert items.calls[0].method == "GET"
+    assert items.calls[0].ok is True
+
+    failed = by_name["Load broken"]
+    assert failed.passed is False
+    assert failed.navigation == "stayed"
+    call = next(item for item in failed.calls if item.name == "/api/broken")
+    assert call.method == "GET"
+    assert call.status == 500
+    assert call.ok is False
+    assert "/api/broken" in failed.detail
+    assert base64.b64decode(failed.screenshot).startswith(b"\x89PNG")
+    assert base64.b64decode(failed.network_screenshot).startswith(b"\x89PNG")
 
 
 def test_empty_url_is_rejected() -> None:
@@ -207,46 +186,5 @@ def test_page_offers_the_sample_target_page() -> None:
 
     assert response.status_code == 200
     assert "/sample/desk.html" in response.text
+    assert "call to action" in response.text
     assert "Examine" in response.text
-
-
-@pytest.fixture(scope="module")
-def app_url() -> Iterator[str]:
-    sock = socket.socket()
-    sock.bind(("127.0.0.1", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    server = uvicorn.Server(
-        uvicorn.Config(create_app(TestEngineer()), host="127.0.0.1", port=port, log_level="warning")
-    )
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    deadline = time.time() + 10
-    url = f"http://127.0.0.1:{port}"
-    while time.time() < deadline:
-        try:
-            httpx.get(url, timeout=0.5)
-            break
-        except httpx.HTTPError:
-            time.sleep(0.05)
-    else:
-        raise RuntimeError("The page did not start.")
-    yield url
-    server.should_exit = True
-    thread.join(timeout=5)
-
-
-def test_posting_the_sample_url_returns_a_passing_report(app_url: str) -> None:
-    response = httpx.post(
-        f"{app_url}/examinations",
-        json={"url": f"{app_url}/sample/desk.html"},
-        timeout=60,
-    )
-
-    body = response.json()
-    assert response.status_code == 200
-    assert body["passed"] is True
-    assert "Add to bag" in body["script"]
-    assert "Quantity" in body["script"]
-    assert any(control["name"] == "Shipping" for control in body["controls"])
-    assert body["attempts"][0]["passed"] is True

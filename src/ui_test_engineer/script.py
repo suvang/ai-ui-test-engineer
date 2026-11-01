@@ -1,7 +1,14 @@
 import json
 from collections.abc import Sequence
+from urllib.parse import urlparse
 
 from ui_test_engineer.types import Control
+
+
+def _locator(role: str, name: str) -> str:
+    return (
+        f"page.get_by_role({json.dumps(role)}, name={json.dumps(name)}, exact=True).first"
+    )
 
 
 def render_script(url: str, heading: str, controls: Sequence[Control]) -> str:
@@ -16,35 +23,26 @@ def render_script(url: str, heading: str, controls: Sequence[Control]) -> str:
         f"        page.goto({json.dumps(url)}, wait_until='domcontentloaded')",
     ]
     if heading:
-        lines.append(
-            "        page.get_by_role('heading', name="
-            f"{json.dumps(heading)}).wait_for(state='visible')"
-        )
+        lines.append(f"        {_locator('heading', heading)}.wait_for(state='visible')")
     flow: Control | None = None
     for control in controls:
         if control.kind == "button":
-            lines.append(
-                "        page.get_by_role('button', name="
-                f"{json.dumps(control.name)}).wait_for(state='visible')"
-            )
+            lines.append(f"        {_locator('button', control.name)}.wait_for(state='visible')")
         elif control.kind == "form_field":
-            lines.append(
-                "        field = page.get_by_role('textbox', name="
-                f"{json.dumps(control.name)})"
-            )
+            lines.append(f"        field = {_locator('textbox', control.name)}")
             lines.append("        field.fill('2')")
             lines.append("        assert field.input_value() == '2'")
         elif control.kind == "navigation_link":
             flow = control
     if flow is not None:
-        lines.append(
-            f"        page.get_by_role('link', name={json.dumps(flow.name)}).click()"
-        )
-        lines.append("        page.wait_for_load_state('domcontentloaded')")
+        lines.append(f"        {_locator('link', flow.name)}.click()")
+        if flow.landed_url:
+            lines.append(f"        page.wait_for_url({json.dumps(_url_glob(flow.landed_url))})")
+        else:
+            lines.append("        page.wait_for_load_state('domcontentloaded')")
         if flow.destination:
             lines.append(
-                "        page.get_by_role('heading', name="
-                f"{json.dumps(flow.destination)}).wait_for(state='visible')"
+                f"        {_locator('heading', flow.destination)}.wait_for(state='visible')"
             )
     lines.extend(
         [
@@ -56,6 +54,12 @@ def render_script(url: str, heading: str, controls: Sequence[Control]) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+def _url_glob(url: str) -> str:
+    parsed = urlparse(url)
+    path = parsed.path.rstrip("/") or "/"
+    return f"{parsed.scheme}://{parsed.netloc}{path}*"
 
 
 def render_from_observation(payload: dict[str, object], drop: set[str]) -> str:
@@ -70,11 +74,13 @@ def render_from_observation(payload: dict[str, object], drop: set[str]) -> str:
             if kind not in {"button", "form_field", "navigation_link"} or not name or name in drop:
                 continue
             destination = item.get("destination", "")
+            landed = item.get("landed_url", "")
             controls.append(
                 Control(
                     kind,
                     name,
                     str(destination) if isinstance(destination, str) else "",
+                    str(landed) if isinstance(landed, str) else "",
                 )
             )
     heading = payload.get("heading", "")

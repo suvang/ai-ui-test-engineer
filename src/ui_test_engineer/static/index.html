@@ -3,204 +3,874 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>UI test engineer</title>
+  <title>UI Test Engineer</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11.5' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   <style>
     :root {
       color-scheme: light;
-      --ink: #1c1915;
-      --muted: #6b6258;
-      --line: #e4d9cc;
-      --paper: #f6f1ea;
-      --card: #fffdf9;
-      --clay: #9a4e2c;
-      --clay-soft: #f8ebe3;
-      --ok: #1f6b45;
-      --ok-soft: #e5f4eb;
-      --bad: #8d2f2f;
-      --bad-soft: #fbeaea;
+      --bg: #f6f7f9;
+      --surface: #ffffff;
+      --surface-2: #f9fafb;
+      --ink: #0f172a;
+      --ink-2: #334155;
+      --muted: #64748b;
+      --line: #e5e7eb;
+      --line-strong: #d1d5db;
+      --accent: #4f46e5;
+      --accent-ink: #ffffff;
+      --accent-soft: #eef2ff;
+      --accent-line: #c7d2fe;
+      --ok: #15803d;
+      --ok-soft: #ecfdf3;
+      --ok-line: #bbf7d0;
+      --bad: #b91c1c;
+      --bad-soft: #fef2f2;
+      --bad-line: #fecaca;
+      --warn: #b45309;
+      --warn-soft: #fffbeb;
+      --warn-line: #fde68a;
+      --neutral-soft: #f1f5f9;
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06);
+      --shadow-lg: 0 10px 30px -12px rgba(15, 23, 42, 0.18);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #0b0f17;
+      --surface: #121826;
+      --surface-2: #0f1520;
+      --ink: #e5e7eb;
+      --ink-2: #cbd5e1;
+      --muted: #94a3b8;
+      --line: #1f2937;
+      --line-strong: #334155;
+      --accent: #818cf8;
+      --accent-ink: #0b0f17;
+      --accent-soft: #1e1b4b;
+      --accent-line: #3730a3;
+      --ok: #4ade80;
+      --ok-soft: #052e16;
+      --ok-line: #14532d;
+      --bad: #f87171;
+      --bad-soft: #2a0f12;
+      --bad-line: #7f1d1d;
+      --warn: #fbbf24;
+      --warn-soft: #2a1d05;
+      --warn-line: #78350f;
+      --neutral-soft: #1e293b;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+      --shadow-lg: 0 10px 30px -12px rgba(0, 0, 0, 0.6);
     }
     * { box-sizing: border-box; }
+    html, body { margin: 0; }
     body {
-      margin: 0;
       min-height: 100vh;
-      background:
-        radial-gradient(640px 220px at 100% 0%, #f3e1d4 0%, transparent 60%),
-        var(--paper);
+      background: var(--bg);
       color: var(--ink);
-      font: 16px/1.5 "Avenir Next", "Segoe UI", sans-serif;
+      font: 15px/1.55 Inter, "SF Pro Text", -apple-system, "Segoe UI", Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
-    .shell {
-      width: min(820px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 36px 0 56px;
+    button, input { font: inherit; color: inherit; }
+    code, .mono { font-family: var(--mono); font-size: 0.86em; }
+    svg { flex: none; }
+    [hidden] { display: none !important; }
+
+    /* ---------- Top bar ---------- */
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      background: color-mix(in srgb, var(--bg) 85%, transparent);
+      backdrop-filter: saturate(180%) blur(10px);
+      border-bottom: 1px solid var(--line);
     }
-    header h1 {
-      margin: 0;
-      font-size: 1.9rem;
-      letter-spacing: -0.03em;
+    .topbar-inner, .shell { width: min(1120px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar-inner { display: flex; align-items: center; gap: 12px; height: 60px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 650; letter-spacing: -0.01em; }
+    .brand-mark {
+      width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center;
+      background: linear-gradient(135deg, #6366f1, #4338ca); color: white;
     }
-    header p { margin: 8px 0 0; color: var(--muted); max-width: 40rem; }
-    form {
-      margin-top: 22px;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 10px;
-      align-items: end;
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 18px;
-      padding: 16px;
+    .tag {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.02em;
+      padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line-strong); color: var(--muted);
     }
-    label {
-      grid-column: 1 / -1;
-      font-size: 0.78rem;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      color: var(--muted);
+    .spacer { flex: 1; }
+    .icon-btn {
+      display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 10px;
+      border: 1px solid var(--line); background: var(--surface); cursor: pointer; color: var(--ink-2);
     }
-    input {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
-      font: inherit;
-      background: #fff;
+    .icon-btn:hover { border-color: var(--line-strong); }
+
+    .shell { padding: 36px 0 72px; }
+
+    /* ---------- Hero / form ---------- */
+    .hero h1 {
+      margin: 0; font-size: clamp(1.6rem, 3vw, 2.15rem); line-height: 1.2; letter-spacing: -0.025em; font-weight: 700;
     }
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 12px 18px;
-      background: var(--clay);
-      color: white;
-      font: inherit;
-      cursor: pointer;
+    .hero p.lead { margin: 10px 0 0; color: var(--muted); max-width: 46rem; font-size: 1.02rem; }
+    .run-card {
+      margin-top: 24px; background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px;
     }
-    button:disabled { opacity: 0.6; cursor: wait; }
-    #status { margin: 16px 0 0; color: var(--muted); min-height: 1.5em; }
-    .report {
-      margin-top: 18px;
-      display: grid;
-      gap: 14px;
+    .run-card label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--ink-2); margin-bottom: 8px; }
+    .run-row { display: flex; gap: 10px; }
+    .field {
+      flex: 1; display: flex; align-items: center; gap: 10px; min-width: 0;
+      border: 1px solid var(--line-strong); border-radius: 10px; padding: 0 12px; background: var(--surface-2);
+      transition: border-color .15s, box-shadow .15s;
     }
-    article {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      padding: 16px 18px;
+    .field:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .field svg { color: var(--muted); }
+    .field input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; padding: 12px 0; }
+    .btn-primary {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      border: 0; border-radius: 10px; padding: 0 20px; min-height: 46px;
+      background: var(--accent); color: var(--accent-ink); font-weight: 600; cursor: pointer;
+      transition: filter .15s, transform .05s;
     }
-    h2 { margin: 0 0 8px; font-size: 1rem; }
-    .pill {
-      display: inline-block;
-      border-radius: 999px;
-      padding: 2px 10px;
-      font-size: 0.85rem;
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-primary:active { transform: translateY(1px); }
+    .btn-primary:disabled { opacity: 0.65; cursor: progress; }
+    .samples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; font-size: 0.85rem; color: var(--muted); }
+    .chip {
+      border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2);
+      border-radius: 999px; padding: 4px 12px; cursor: pointer; font-size: 0.82rem;
     }
-    .pass { background: var(--ok-soft); color: var(--ok); }
-    .fail { background: var(--bad-soft); color: var(--bad); }
-    ul { margin: 0; padding-left: 18px; }
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font: 13px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    .chip:hover { border-color: var(--accent-line); color: var(--accent); }
+    .caution {
+      display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; padding-top: 14px;
+      border-top: 1px dashed var(--line); font-size: 0.82rem; color: var(--muted);
     }
-    .failure { color: var(--bad); }
+    .caution svg { color: var(--warn); margin-top: 2px; }
+
+    /* ---------- How it works ---------- */
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+    .step {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center;
+      background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 0.85rem; margin-bottom: 10px;
+    }
+    .step h3 { margin: 0 0 4px; font-size: 0.98rem; }
+    .step p { margin: 0; color: var(--muted); font-size: 0.88rem; }
+    .legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 16px; font-size: 0.82rem; color: var(--muted); }
+    .legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+    /* ---------- Loading ---------- */
+    .loading {
+      margin-top: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      padding: 22px; display: flex; gap: 16px; align-items: center; box-shadow: var(--shadow);
+    }
+    .spinner {
+      width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--accent-soft);
+      border-top-color: var(--accent); animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading strong { display: block; }
+    .loading span { color: var(--muted); font-size: 0.88rem; }
+    .loading .elapsed { margin-left: auto; font-family: var(--mono); font-size: 0.85rem; color: var(--muted); }
+
+    /* ---------- Report ---------- */
+    .report { margin-top: 28px; display: grid; gap: 18px; scroll-margin-top: 80px; }
+    .verdict {
+      display: flex; gap: 16px; align-items: center; padding: 20px 22px;
+      border-radius: var(--radius); border: 1px solid; box-shadow: var(--shadow);
+    }
+    .verdict.pass { background: var(--ok-soft); border-color: var(--ok-line); }
+    .verdict.fail { background: var(--bad-soft); border-color: var(--bad-line); }
+    .verdict-icon { width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center; color: white; }
+    .verdict.pass .verdict-icon { background: var(--ok); }
+    .verdict.fail .verdict-icon { background: var(--bad); }
+    .verdict h2 { margin: 0; font-size: 1.2rem; letter-spacing: -0.01em; }
+    .verdict p { margin: 2px 0 0; color: var(--ink-2); font-size: 0.9rem; word-break: break-all; }
+    .verdict .meta { margin-left: auto; text-align: right; color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .stat {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px;
+    }
+    .stat-label { font-size: 0.8rem; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; }
+    .stat-value small { font-size: 0.9rem; color: var(--muted); font-weight: 500; }
+    .stat-sub { font-size: 0.8rem; margin-top: 2px; }
+    .stat-sub.bad { color: var(--bad); }
+    .stat-sub.ok { color: var(--ok); }
+    .stat-sub.muted { color: var(--muted); }
+    .bar { height: 6px; background: var(--neutral-soft); border-radius: 999px; overflow: hidden; margin-top: 10px; display: flex; }
+    .bar i { display: block; height: 100%; }
+    .bar .g { background: var(--ok); }
+    .bar .r { background: var(--bad); }
+
+    .toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 6px; }
+    .toolbar h2 { margin: 0; font-size: 1.05rem; }
+    .seg { display: inline-flex; background: var(--neutral-soft); border-radius: 10px; padding: 3px; gap: 2px; }
+    .seg button {
+      border: 0; background: transparent; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+      font-size: 0.85rem; color: var(--muted); font-weight: 500; display: inline-flex; gap: 6px; align-items: center;
+    }
+    .seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+    .count { font-size: 0.75rem; padding: 0 6px; border-radius: 999px; background: var(--line); color: var(--ink-2); }
+    .link-btn { border: 0; background: none; color: var(--accent); cursor: pointer; font-size: 0.85rem; font-weight: 500; padding: 4px; }
+
+    .list { display: grid; gap: 10px; }
+    .empty {
+      padding: 28px; text-align: center; color: var(--muted); background: var(--surface);
+      border: 1px dashed var(--line-strong); border-radius: var(--radius);
+    }
+
+    /* Finding card */
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+      box-shadow: var(--shadow); overflow: hidden;
+    }
+    .card.failed { border-left: 4px solid var(--bad); }
+    .card.passed { border-left: 4px solid var(--ok); }
+    .card-head {
+      width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+      background: none; border: 0; cursor: pointer; text-align: left;
+    }
+    .card-head:hover { background: var(--surface-2); }
+    .status-dot { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; }
+    .status-dot.ok { background: var(--ok-soft); color: var(--ok); }
+    .status-dot.bad { background: var(--bad-soft); color: var(--bad); }
+    .card-title { min-width: 0; flex: 1; }
+    .card-title strong { display: block; font-size: 0.98rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .card-title .sub { color: var(--muted); font-size: 0.84rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+    .badges { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 5px; font-size: 0.74rem; font-weight: 600;
+      padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink-2);
+      white-space: nowrap;
+    }
+    .badge.ok { background: var(--ok-soft); border-color: var(--ok-line); color: var(--ok); }
+    .badge.bad { background: var(--bad-soft); border-color: var(--bad-line); color: var(--bad); }
+    .badge.warn { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+    .chev { color: var(--muted); transition: transform .2s; }
+    .card.open .chev { transform: rotate(180deg); }
+    .card-body {
+      display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px;
+      padding: 4px 18px 18px 58px; border-top: 1px solid var(--line); padding-top: 16px;
+    }
+    .card:not(.open) .card-body { display: none; }
+    .section-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
+    .block + .block { margin-top: 16px; }
+    .action-text { margin: 0; color: var(--ink-2); }
+    .dest { display: inline-flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 0.85rem; color: var(--muted); word-break: break-all; }
+    .dest a { color: var(--accent); text-decoration: none; }
+    .dest a:hover { text-decoration: underline; }
+    .callout {
+      border-radius: 10px; padding: 10px 12px; font-size: 0.88rem; border: 1px solid var(--bad-line);
+      background: var(--bad-soft); color: var(--bad); word-break: break-word;
+    }
+    .callout.warn { border-color: var(--warn-line); background: var(--warn-soft); color: var(--warn); }
+
+    .calls { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+    .call { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 9px 12px; font-size: 0.86rem; }
+    .call + .call { border-top: 1px solid var(--line); }
+    .call.bad { background: color-mix(in srgb, var(--bad-soft) 60%, transparent); }
+    .method {
+      font-family: var(--mono); font-size: 0.72rem; font-weight: 700; text-align: center;
+      padding: 2px 0; border-radius: 6px; background: var(--neutral-soft); color: var(--ink-2);
+    }
+    .call-path { min-width: 0; }
+    .call-path code { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+    .call-path .why { display: block; color: var(--muted); font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .code {
+      font-family: var(--mono); font-size: 0.76rem; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+    }
+    .code.ok { background: var(--ok-soft); color: var(--ok); }
+    .code.bad { background: var(--bad-soft); color: var(--bad); }
+
+    .shots { display: grid; gap: 12px; align-content: start; }
+    .shot { margin: 0; }
+    .shot button {
+      display: block; width: 100%; padding: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+      background: white; cursor: zoom-in; position: relative;
+    }
+    .shot img { display: block; width: 100%; height: 150px; object-fit: cover; object-position: top left; }
+    .shot button::after {
+      content: "Click to enlarge"; position: absolute; right: 8px; bottom: 8px; font-size: 0.7rem;
+      background: rgba(15, 23, 42, 0.75); color: white; padding: 2px 8px; border-radius: 999px; opacity: 0; transition: opacity .15s;
+    }
+    .shot button:hover::after { opacity: 1; }
+    .shot figcaption { margin-top: 6px; color: var(--muted); font-size: 0.78rem; }
+
+    .error-card {
+      background: var(--surface); border: 1px solid var(--bad-line); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow);
+    }
+    .error-card pre {
+      margin: 12px 0 0; padding: 12px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line);
+      font: 12.5px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; color: var(--ink-2);
+    }
+    .error-card ul { margin: 10px 0 0; padding-left: 18px; color: var(--muted); font-size: 0.9rem; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; z-index: 50; background: rgba(2, 6, 23, 0.8);
+      display: grid; place-items: center; padding: 24px; cursor: zoom-out;
+    }
+    .lightbox figure { margin: 0; max-width: min(1200px, 100%); max-height: 100%; display: grid; gap: 10px; }
+    .lightbox img { max-width: 100%; max-height: calc(100vh - 100px); border-radius: 10px; background: white; box-shadow: var(--shadow-lg); }
+    .lightbox figcaption { color: #e2e8f0; text-align: center; font-size: 0.9rem; }
+
+    footer { margin-top: 40px; color: var(--muted); font-size: 0.8rem; text-align: center; }
+
+    @media (max-width: 860px) {
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .card-body { grid-template-columns: 1fr; padding-left: 18px; }
+      .steps { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .run-row { flex-direction: column; }
+      .badges { display: none; }
+      .verdict { flex-wrap: wrap; }
+      .verdict .meta { margin-left: 0; text-align: left; }
+      .tag { display: none; }
+    }
   </style>
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("uite-theme"); } catch (e) {}
+      var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    })();
+  </script>
 </head>
 <body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+        </span>
+        UI Test Engineer
+      </div>
+      <span class="tag">Powered by Playwright</span>
+      <span class="spacer"></span>
+      <button class="icon-btn" id="theme" type="button" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+      </button>
+    </div>
+  </header>
+
   <main class="shell">
-    <header>
-      <h1>UI test engineer</h1>
-      <p>Enter a Target page. The Examination writes a Playwright Test script, Runs it, and keeps every Attempt.</p>
-    </header>
-    <form id="examine">
-      <label for="url">Target page</label>
-      <input id="url" name="url" type="url" required placeholder="https://example.com" />
-      <button type="submit">Examine</button>
+    <section class="hero">
+      <h1>Click every button and link on a page. See what breaks.</h1>
+      <p class="lead">Enter a page URL. Each call to action is clicked in a real browser, and the report shows whether navigation worked, whether that click's API calls worked, and which API calls failed just by opening the page.</p>
+    </section>
+
+    <form id="examine" class="run-card" novalidate>
+      <label for="url">Target page URL</label>
+      <div class="run-row">
+        <div class="field">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <input id="url" name="url" type="url" required placeholder="https://example.com/page" autocomplete="url" spellcheck="false" />
+        </div>
+        <button type="submit" class="btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l12-7.5z"/></svg>
+          <span>Examine</span>
+        </button>
+      </div>
+      <div class="samples">
+        <span>Try a sample:</span>
+        <button type="button" class="chip" data-sample="/sample/desk.html">Studio desk (has failures)</button>
+        <button type="button" class="chip" data-sample="/sample/soft.html">Server error page</button>
+        <button type="button" class="chip" data-sample="/sample/menu.html">Menu with duplicates</button>
+      </div>
+      <div class="caution">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9L1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>
+        <span>This really clicks everything, including buttons that call APIs. Only examine pages you're happy to have clicked through.</span>
+      </div>
     </form>
-    <p id="status"></p>
+
+    <section id="intro">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <h3>Open the page</h3>
+          <p>A headless Chromium loads the URL and records every API call (fetch/XHR) made while the page opens.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <h3>Click each call to action</h3>
+          <p>Every visible link and button is clicked one at a time, starting fresh from the original page each time.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <h3>Get a clear report</h3>
+          <p>See which clicks navigated, which API calls failed, with annotated screenshots of exactly what was clicked.</p>
+        </div>
+      </div>
+      <div class="legend">
+        <span><span class="badge ok">Passed</span> navigation and API calls worked</span>
+        <span><span class="badge bad">Failed</span> a navigation or API call broke</span>
+        <span><span class="badge warn">Warning</span> the page rendered, but its response had an error status</span>
+      </div>
+    </section>
+
+    <div id="status" class="loading" role="status" aria-live="polite" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <div>
+        <strong>Examining the Target page…</strong>
+        <span id="status-step">Opening the page in Chromium</span>
+      </div>
+      <div class="elapsed" id="elapsed">0s</div>
+    </div>
+
     <section id="report" class="report" hidden></section>
+
+    <footer>Pass or fail always comes from Playwright. With an OpenAI key set, a model only rewrites the "what it did" line.</footer>
   </main>
+
+  <div id="lightbox" class="lightbox" hidden>
+    <figure><img alt="" /><figcaption></figcaption></figure>
+  </div>
+
   <script>
     const form = document.querySelector("#examine");
     const urlInput = document.querySelector("#url");
     const status = document.querySelector("#status");
+    const statusStep = document.querySelector("#status-step");
+    const elapsedEl = document.querySelector("#elapsed");
+    const intro = document.querySelector("#intro");
     const report = document.querySelector("#report");
-    const submit = form.querySelector("button");
+    const submit = form.querySelector("button[type=submit]");
+    const lightbox = document.querySelector("#lightbox");
     urlInput.value = location.origin + "/sample/desk.html";
 
+    /* ---------- Small helpers ---------- */
+    const ICONS = {
+      check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+      x: '<path d="M6 6l12 12M18 6L6 18"/>',
+      chev: '<path d="M6 9l6 6 6-6"/>',
+      link: '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/>',
+      cursor: '<path d="M4 4l7 17 2.5-7.5L21 11z"/>',
+      arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+      alert: '<circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>',
+      sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+      moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>',
+    };
+    function icon(name, size = 16, stroke = 2.2) {
+      const span = document.createElement("span");
+      span.style.display = "inline-flex";
+      span.innerHTML = '<svg width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + stroke + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + ICONS[name] + "</svg>";
+      return span;
+    }
+    function el(tag, props = {}, ...children) {
+      const node = document.createElement(tag);
+      for (const [key, value] of Object.entries(props)) {
+        if (value == null || value === false) continue;
+        if (key === "class") node.className = value;
+        else if (key === "text") node.textContent = value;
+        else if (key.startsWith("on")) node.addEventListener(key.slice(2), value);
+        else node.setAttribute(key, value === true ? "" : value);
+      }
+      for (const child of children.flat()) {
+        if (child == null || child === false) continue;
+        node.append(child instanceof Node ? child : document.createTextNode(String(child)));
+      }
+      return node;
+    }
+    function plural(n, one, many) { return n + " " + (n === 1 ? one : many || one + "s"); }
+    function shortUrl(url) {
+      try {
+        const u = new URL(url);
+        return (u.origin === location.origin ? "" : u.host) + u.pathname + u.search;
+      } catch (e) { return url; }
+    }
+
+    /* ---------- Theme ---------- */
+    const themeBtn = document.querySelector("#theme");
+    function paintThemeIcon() {
+      const dark = document.documentElement.dataset.theme === "dark";
+      themeBtn.replaceChildren(icon(dark ? "sun" : "moon", 18, 2));
+    }
+    themeBtn.addEventListener("click", () => {
+      const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem("uite-theme", next); } catch (e) {}
+      paintThemeIcon();
+    });
+    paintThemeIcon();
+
+    /* ---------- Samples ---------- */
+    document.querySelectorAll("[data-sample]").forEach((chip) => {
+      chip.addEventListener("click", () => {
+        urlInput.value = location.origin + chip.dataset.sample;
+        form.requestSubmit();
+      });
+    });
+
+    /* ---------- Lightbox ---------- */
+    function openLightbox(src, caption) {
+      lightbox.querySelector("img").src = src;
+      lightbox.querySelector("img").alt = caption;
+      lightbox.querySelector("figcaption").textContent = caption;
+      lightbox.hidden = false;
+    }
+    lightbox.addEventListener("click", () => { lightbox.hidden = true; });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") lightbox.hidden = true; });
+
+    /* ---------- Loading state ---------- */
+    const STEPS = [
+      "Opening the page in Chromium",
+      "Recording API calls made on page load",
+      "Finding every visible link and button",
+      "Clicking each call to action",
+      "Checking navigation and API responses",
+      "Capturing annotated screenshots",
+      "Writing the report",
+    ];
+    let timer = null;
+    function startLoading() {
+      const started = Date.now();
+      let i = 0;
+      statusStep.textContent = STEPS[0];
+      elapsedEl.textContent = "0s";
+      status.hidden = false;
+      timer = setInterval(() => {
+        const secs = Math.floor((Date.now() - started) / 1000);
+        elapsedEl.textContent = secs + "s";
+        const next = Math.min(STEPS.length - 1, Math.floor(secs / 3));
+        if (next !== i) { i = next; statusStep.textContent = STEPS[i]; }
+      }, 250);
+      return started;
+    }
+    function stopLoading() { clearInterval(timer); status.hidden = true; }
+
+    /* ---------- Submit ---------- */
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
+      const url = urlInput.value.trim();
+      if (!url) { urlInput.focus(); return; }
       submit.disabled = true;
-      status.textContent = "Examining the Target page…";
+      submit.querySelector("span").textContent = "Examining…";
+      intro.hidden = true;
       report.hidden = true;
       report.replaceChildren();
+      const started = startLoading();
       try {
         const response = await fetch("/examinations", {
           method: "POST",
           headers: { "content-type": "application/json" },
-          body: JSON.stringify({ url: urlInput.value }),
+          body: JSON.stringify({ url }),
         });
-        const body = await response.json();
+        const body = await response.json().catch(() => ({}));
+        const seconds = ((Date.now() - started) / 1000).toFixed(1);
         if (!response.ok) {
-          status.textContent = body.detail || "The Examination could not start.";
+          renderError(url, body.detail || "The Examination could not start.");
           return;
         }
-        status.textContent = "";
-        render(body);
+        render(body, seconds);
       } catch (error) {
-        status.textContent = "The Examination could not start.";
+        renderError(url, "The Examination could not start. Is the server still running?");
       } finally {
+        stopLoading();
         submit.disabled = false;
+        submit.querySelector("span").textContent = "Examine";
       }
     });
 
-    function render(body) {
+    /* ---------- Render: errors ---------- */
+    function renderError(url, detail) {
       report.hidden = false;
-      const outcome = document.createElement("article");
-      const pill = document.createElement("span");
-      pill.className = "pill " + (body.passed ? "pass" : "fail");
-      pill.textContent = body.passed ? "Passed" : "Failed";
-      const heading = document.createElement("h2");
-      heading.textContent = "Report";
-      outcome.append(heading, pill);
-      const picture = document.createElement("p");
-      picture.textContent = "Picture captured (" + body.screenshot_bytes + " bytes).";
-      outcome.append(picture);
-      report.append(outcome);
+      report.replaceChildren(
+        el("div", { class: "verdict fail" },
+          el("div", { class: "verdict-icon" }, icon("alert", 22, 2.4)),
+          el("div", {},
+            el("h2", { text: "Couldn't examine this page" }),
+            el("p", { text: url }),
+          ),
+        ),
+        el("div", { class: "error-card" },
+          el("strong", { text: "What went wrong" }),
+          el("pre", { text: detail }),
+          el("ul", {},
+            el("li", { text: "Check that the URL is correct and includes http:// or https://." }),
+            el("li", { text: "Make sure the page is reachable from the machine running this server." }),
+            el("li", { text: "Pages behind a login can't be examined yet." }),
+          ),
+        ),
+      );
+    }
 
-      const controls = document.createElement("article");
-      controls.innerHTML = "<h2>Controls</h2>";
-      const list = document.createElement("ul");
-      for (const control of body.controls) {
-        const item = document.createElement("li");
-        item.textContent = control.kind + ": " + control.name;
-        list.append(item);
+    /* ---------- Render: report ---------- */
+    let currentFilter = "all";
+
+    function render(body, seconds) {
+      report.hidden = false;
+      if (body.detail && !(body.findings || []).length) {
+        renderError(body.url || urlInput.value, body.detail);
+        return;
       }
-      controls.append(list);
-      report.append(controls);
+      const findings = body.findings || [];
+      const pageCalls = body.page_calls || [];
+      const navigations = findings.filter((f) => f.navigation !== "stayed");
+      const navPassed = navigations.filter((f) => f.navigation === "passed").length;
+      const clickCalls = findings.flatMap((f) => f.calls || []);
+      const clickFailed = clickCalls.filter((c) => !c.ok).length;
+      const pageFailed = pageCalls.filter((c) => !c.ok).length;
+      const failedFindings = findings.filter((f) => !f.passed).length;
+      const issues = failedFindings + (pageFailed ? 1 : 0);
 
-      const attempts = document.createElement("article");
-      attempts.innerHTML = "<h2>Attempts</h2>";
-      body.attempts.forEach((attempt, index) => {
-        const line = document.createElement("p");
-        line.textContent = "Attempt " + (index + 1) + ": " + (attempt.passed ? "passed" : "failed");
-        attempts.append(line);
-        if (attempt.failure) {
-          const failure = document.createElement("pre");
-          failure.className = "failure";
-          failure.textContent = attempt.failure;
-          attempts.append(failure);
+      // Verdict banner
+      const headline = body.passed
+        ? "All checks passed"
+        : plural(issues, "problem") + " found";
+      const sub = body.passed
+        ? "Every call to action behaved as expected."
+        : [
+            failedFindings ? plural(failedFindings, "call to action") + " failed" : "",
+            pageFailed ? plural(pageFailed, "API call") + " failed on page load" : "",
+          ].filter(Boolean).join(" · ");
+      report.append(
+        el("div", { class: "verdict " + (body.passed ? "pass" : "fail") },
+          el("div", { class: "verdict-icon" }, icon(body.passed ? "check" : "x", 24, 2.8)),
+          el("div", { style: "min-width:0" },
+            el("h2", { text: headline }),
+            el("p", { text: sub }),
+            el("p", { class: "mono", style: "color:var(--muted);font-size:0.8rem" }, body.url || ""),
+          ),
+          el("div", { class: "meta" },
+            el("div", { text: "Finished in " + seconds + "s" }),
+            el("div", { text: new Date().toLocaleTimeString() }),
+          ),
+        ),
+      );
+
+      // Stats
+      report.append(
+        el("div", { class: "stats" },
+          stat("Calls to action clicked", findings.length, "",
+            failedFindings ? [failedFindings + " failed", "bad"] : ["All passed", "ok"],
+            findings.length - failedFindings, failedFindings),
+          stat("Navigations", navPassed, "/ " + navigations.length,
+            navigations.length ? (navPassed === navigations.length ? ["All reached their page", "ok"] : [(navigations.length - navPassed) + " broken", "bad"]) : ["None to check", "muted"],
+            navPassed, navigations.length - navPassed),
+          stat("API calls from clicks", clickCalls.length - clickFailed, "/ " + clickCalls.length,
+            clickCalls.length ? (clickFailed ? [clickFailed + " failed", "bad"] : ["All succeeded", "ok"]) : ["No clicks called an API", "muted"],
+            clickCalls.length - clickFailed, clickFailed),
+          stat("API calls on page load", pageCalls.length - pageFailed, "/ " + pageCalls.length,
+            pageCalls.length ? (pageFailed ? [pageFailed + " failed", "bad"] : ["All succeeded", "ok"]) : ["None made", "muted"],
+            pageCalls.length - pageFailed, pageFailed),
+        ),
+      );
+
+      // Build cards
+      const cards = [];
+      if (pageCalls.length) cards.push(pageCard(body, pageCalls));
+      for (const f of findings) cards.push(findingCard(f));
+      cards.sort((a, b) => (a.dataset.state === "failed" ? 0 : 1) - (b.dataset.state === "failed" ? 0 : 1));
+
+      const failedCount = cards.filter((c) => c.dataset.state === "failed").length;
+      const passedCount = cards.length - failedCount;
+      const list = el("div", { class: "list" });
+      const empty = el("div", { class: "empty", hidden: true });
+
+      const filters = [["all", "All", cards.length], ["failed", "Failed", failedCount], ["passed", "Passed", passedCount]];
+      const seg = el("div", { class: "seg", role: "group", "aria-label": "Filter results" });
+      currentFilter = "all";
+      for (const [key, label, n] of filters) {
+        seg.append(el("button", {
+          type: "button", "aria-pressed": String(key === currentFilter), "data-filter": key,
+          onclick: () => { currentFilter = key; applyFilter(); },
+        }, label, el("span", { class: "count", text: String(n) })));
+      }
+      let allOpen = false;
+      const expandBtn = el("button", { type: "button", class: "link-btn", text: "Expand all",
+        onclick: () => {
+          allOpen = !allOpen;
+          cards.forEach((c) => setOpen(c, allOpen));
+          expandBtn.textContent = allOpen ? "Collapse all" : "Expand all";
+        } });
+
+      function applyFilter() {
+        seg.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.filter === currentFilter)));
+        let visible = 0;
+        for (const c of cards) {
+          const show = currentFilter === "all" || c.dataset.state === currentFilter;
+          c.hidden = !show;
+          if (show) visible++;
         }
-      });
-      report.append(attempts);
+        empty.hidden = visible > 0;
+        empty.textContent = currentFilter === "failed" ? "Nothing failed. Nice." : "Nothing passed.";
+      }
 
-      const script = document.createElement("article");
-      script.innerHTML = "<h2>Test script</h2>";
-      const source = document.createElement("pre");
-      source.textContent = body.script;
-      script.append(source);
-      report.append(script);
+      report.append(
+        el("div", { class: "toolbar" },
+          el("h2", { text: "Results" }), seg, el("span", { class: "spacer" }), expandBtn),
+      );
+      list.append(...cards, empty);
+      report.append(list);
+      if (!cards.length) {
+        empty.hidden = false;
+        empty.textContent = "No visible links or buttons were found on this page.";
+      } else {
+        applyFilter();
+      }
+      report.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function stat(label, value, of, sub, good, bad) {
+      const total = good + bad;
+      return el("div", { class: "stat" },
+        el("div", { class: "stat-label", text: label }),
+        el("div", { class: "stat-value" }, String(value), of ? el("small", { text: " " + of }) : null),
+        el("div", { class: "stat-sub " + sub[1], text: sub[0] }),
+        el("div", { class: "bar", "aria-hidden": "true" },
+          total ? el("i", { class: "g", style: "width:" + (good / total) * 100 + "%" }) : null,
+          total ? el("i", { class: "r", style: "width:" + (bad / total) * 100 + "%" }) : null,
+        ),
+      );
+    }
+
+    /* ---------- Cards ---------- */
+    function setOpen(card, open) {
+      card.classList.toggle("open", open);
+      card.querySelector(".card-head").setAttribute("aria-expanded", String(open));
+    }
+
+    function card({ state, title, subtitle, badges, body, shots }) {
+      const failed = state === "failed";
+      const node = el("article", { class: "card " + state, "data-state": state });
+      const head = el("button", { type: "button", class: "card-head", "aria-expanded": "false",
+        onclick: () => setOpen(node, !node.classList.contains("open")) },
+        el("span", { class: "status-dot " + (failed ? "bad" : "ok"), title: failed ? "Failed" : "Passed" },
+          icon(failed ? "x" : "check", 15, 3)),
+        el("span", { class: "card-title" },
+          el("strong", { text: title }),
+          el("span", { class: "sub", text: subtitle }),
+        ),
+        el("span", { class: "badges" }, badges),
+        el("span", { class: "chev" }, icon("chev", 18, 2)),
+      );
+      const content = el("div", { class: "card-body" },
+        el("div", {}, body),
+        shots.length ? el("div", { class: "shots" }, shots.map(shotFigure)) : el("div"),
+      );
+      node.append(head, content);
+      if (failed) setOpen(node, true);
+      return node;
+    }
+
+    function pageCard(body, calls) {
+      const failed = calls.filter((c) => !c.ok);
+      const shots = [];
+      if (body.page_screenshot) shots.push({ src: body.page_screenshot, caption: "The page when it opened." });
+      if (failed.length && body.page_network_screenshot) {
+        shots.push({ src: body.page_network_screenshot, caption: "Network tab: failed requests from opening this page." });
+      }
+      return card({
+        state: failed.length ? "failed" : "passed",
+        title: "Page load",
+        subtitle: "API calls made just by opening this page, before anything is clicked",
+        badges: [
+          el("span", { class: "badge" }, plural(calls.length, "API call")),
+          failed.length
+            ? el("span", { class: "badge bad", text: failed.length + " failed" })
+            : el("span", { class: "badge ok", text: "All OK" }),
+        ],
+        body: [
+          el("div", { class: "block" },
+            el("p", { class: "section-label", text: "API calls" }),
+            callList(calls)),
+        ],
+        shots,
+      });
+    }
+
+    function findingCard(f) {
+      const name = f.name || "Call to action";
+      const calls = f.calls || [];
+      const network = f.network || [];
+      const isLink = f.kind === "link";
+      const badges = [el("span", { class: "badge" }, icon(isLink ? "link" : "cursor", 12, 2.4), isLink ? "Link" : "Button")];
+      if (f.navigation === "passed") badges.push(el("span", { class: "badge ok", text: "Navigated" }));
+      else if (f.navigation === "failed") badges.push(el("span", { class: "badge bad", text: "Navigation failed" }));
+      else if (f.navigation === "missed") badges.push(el("span", { class: "badge bad", text: "Couldn't click" }));
+      else badges.push(el("span", { class: "badge", text: "Stayed on page" }));
+      if (calls.length) {
+        const bad = calls.filter((c) => !c.ok).length;
+        badges.push(bad
+          ? el("span", { class: "badge bad", text: plural(bad, "API") + " failed" })
+          : el("span", { class: "badge ok", text: plural(calls.length, "API") + " OK" }));
+      }
+      if (network.some((c) => !c.ok) && f.navigation === "passed") {
+        badges.push(el("span", { class: "badge warn", text: "Error status" }));
+      }
+
+      const blocks = [
+        el("div", { class: "block" },
+          el("p", { class: "section-label", text: "What it did" }),
+          el("p", { class: "action-text", text: f.action || "" }),
+          f.destination ? el("div", { class: "dest" }, icon("arrow", 14, 2),
+            el("a", { href: f.destination, target: "_blank", rel: "noopener", text: f.destination })) : null,
+        ),
+      ];
+      if (f.detail && (f.navigation === "failed" || f.navigation === "missed")) {
+        blocks.push(el("div", { class: "block" }, el("div", { class: "callout", text: f.detail })));
+      }
+      if (calls.length) {
+        blocks.push(el("div", { class: "block" },
+          el("p", { class: "section-label", text: "API calls from this click" }), callList(calls)));
+      }
+      if (network.length) {
+        blocks.push(el("div", { class: "block" },
+          el("p", { class: "section-label", text: "Destination response" }),
+          f.navigation === "passed"
+            ? el("div", { class: "callout warn", style: "margin-bottom:8px",
+                text: "The page rendered, but the server responded with an error status:" })
+            : null,
+          callList(network)));
+      }
+
+      const shots = [];
+      if (f.screenshot) shots.push({ src: f.screenshot, caption: "Starting page, with " + name + " marked by a box and an arrow." });
+      if (f.network_screenshot) shots.push({ src: f.network_screenshot, caption: "Network tab: failed requests." });
+
+      return card({
+        state: f.passed ? "passed" : "failed",
+        title: name,
+        subtitle: oneLine(f),
+        badges,
+        body: blocks,
+        shots,
+      });
+    }
+
+    function oneLine(f) {
+      if (f.navigation === "missed") return "Could not be clicked.";
+      if (f.navigation === "passed" || f.navigation === "failed") {
+        return (f.navigation === "passed" ? "Goes to " : "Tried to go to ") + shortUrl(f.destination || "");
+      }
+      const calls = f.calls || [];
+      if (!calls.length) return "Stays on the page. No API calls.";
+      return "Stays on the page. Calls " + calls.map((c) => c.method + " " + c.name).join(", ");
+    }
+
+    function callList(calls) {
+      return el("div", { class: "calls" }, calls.map((c) => {
+        const code = c.status == null ? "No response" : String(c.status);
+        return el("div", { class: "call" + (c.ok ? "" : " bad"), title: c.url },
+          el("span", { class: "method", text: c.method }),
+          el("span", { class: "call-path" },
+            el("code", { text: c.name }),
+            el("span", { class: "why", text: c.ok ? c.url : (c.detail || "") + " — " + c.url }),
+          ),
+          el("span", { class: "code " + (c.ok ? "ok" : "bad"), text: code }),
+        );
+      }));
+    }
+
+    function shotFigure(shot) {
+      const src = "data:image/png;base64," + shot.src;
+      return el("figure", { class: "shot" },
+        el("button", { type: "button", "aria-label": "Enlarge: " + shot.caption, onclick: () => openLightbox(src, shot.caption) },
+          el("img", { src, alt: shot.caption, loading: "lazy" })),
+        el("figcaption", { text: shot.caption }),
+      );
     }
   </script>
 </body>

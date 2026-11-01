@@ -1,6 +1,6 @@
 # UI test engineer
 
-Language for examining one Target page and proving that examination with a Test script.
+Language for examining one page by clicking every call to action on it.
 
 ## Language
 
@@ -10,52 +10,24 @@ Language for examining one Target page and proving that examination with a Test 
 The page at the URL the user asked to examine.
 _Avoid_: Site, app, website
 
-**Control**:
-A Button, Form field, or Navigation link on a page.
+**Call to action**:
+A visible link or button on the Target page.
 _Avoid_: Element, widget, node, selector
 
-**Button**:
-A Control that can be pressed.
-_Avoid_: Click target, action
+**Finding**:
+What one call to action did, and whether that click passed.
+_Avoid_: Test case, assertion
 
-**Form field**:
-A Control the user can type into.
-_Avoid_: Input, textbox, widget
-
-**Navigation link**:
-A Control that moves to another page on the same origin.
-_Avoid_: Anchor, href, menu item
-
-**Flow**:
-The step from the Target page along one Navigation link to the next page.
-_Avoid_: Crawl, journey, path
-
-**Observation**:
-The words, Controls, and picture captured from a page.
-_Avoid_: DOM, HTML dump, scrape
+**API call**:
+A fetch or XHR request made because a call to action was clicked.
+_Avoid_: Asset, image request
 
 ### The examination
 
 **Examination**:
-One request to understand a Target page and prove it with a Test script.
-_Avoid_: Scan, audit, job
-
-**Test script**:
-The executable Playwright test an Examination writes for a Target page.
-_Avoid_: Spec file, Cypress test, suite
-
-**Run**:
-Executing a Test script against the Target page.
-_Avoid_: Build, job
-
-**Attempt**:
-One cycle of writing a Test script and Running it.
-_Avoid_: Retry, iteration
-
-**Failure**:
-The reason a Run did not pass.
-_Avoid_: Error, exception, flake
+One request to click every call to action on a Target page and report each one.
+_Avoid_: Scan, crawl, job
 
 **Report**:
-What the user gets back from an Examination: the Controls, the Test script, and every Attempt.
-_Avoid_: Output, log, result
+What the user gets back: API calls from opening the page, then every call to action with its navigation result and the API calls that click made.
+_Avoid_: Output, log, script
